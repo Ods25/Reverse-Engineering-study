@@ -1,0 +1,92 @@
+uname -a //lists what type of linux is currently running
+
+
+Levels to be exploited can be found in /opt/protostar/bin
+
+file [filehere] // with this we can check the filetype of a file
+
+ps aux // list all running processes
+	first column tells user of running process
+
+
+file permissions:
+	r-x: read + execute
+	rw-: read + write
+	rwx: read+write+execute
+
+
+BIN 0X0C
+_______________________________
+
+
+gdb section:
+	break *main //this puts a breakpoint on the main function
+	run //this runs the program
+	disassemble main // this disassembles the main function
+	set disassembly-flavor intel
+	info proc mappings //this looks at mapped memory
+
+
+The stack section:
+	The stack is a memory address at the bottom 
+	The stack grows form the bottom, and starts at the top
+	in gdb:
+		x/wx $esp //use this to examine the stack pointer
+	but the end addr no longer belongs to the stack once hte stack is created, so the real addr for the end of the stack is the end addr -8 //example: end addr: 0xc0000000, real stack end: 0xbffffff8
+
+
+Info proc mappings gives us the following information
+Start Addr	End Addr	Size	Offset	objfile
+0xbffeb000	0xc0000000	0x15000	0	[stack]
+
+x/wx $esp gives us the following information:
+0xbffff76c
+The following visualization can be utilized:
+
+
+^<- 0xbffeb000 Start addr
+|
+|
+|
+|MMMMM <- 0xbffff76c $esp Stack Pointer
+|MMMMM
+|MMMMM
+|MMMMM
+|MMMMM
+|MMMMM <- 0xbffffff8
+_      <- 0xc0000000 End Addr
+
+
+Moving on to the assembly instructions: 
+	push ebp //ebp is a register used as hte base pointer, it contains an address pointing somewhere into the stack
+	leave //leave is MOV ESP, EBP and then POP EBP. 
+	The start and end are symmetrical, in the beginning it is
+	PUSH EBP
+	MOV EBP, ESP
+	
+	Which is essentially the opposite of LEAVE
+	____
+	
+	
+
+Visualization of what is going on between main+0 - main+9 and main+63-main+64
+
+esp= 0xbffff7e4
+ebp= 0xbffff900
+0xb7eadc73 <__libc_start_main+227>: call 0x80483f4 <main> //this is where it all starts, call will push the theoretically next instruction pointer (eip) onto the stack, and then jump to our main function.
+esp= 0xbffff7dc //stack pointer got incremented by one byte(8 bits), and the addr is placed there
+ebp=same
+eip= 0x080483f4 //instruction pointer points to <main+0> now
+0xb7eadc76 <__libc_start_main+230>: mov  DWORD PTR [esp], eax
+...
+0x080483f4 <main+0>:    push   ebp //push ebp happens, making ebp=0xbffff7e8 and also another location at the bottom of the stack
+0x080483f5 <main+1>:    mov    ebp,esp //now we overwrite ebp with the value from esp. ebp=0xbffff768
+0x080483f7 <main+3>:    and    esp,0xfffffff0 //does some cleanup so the value of esp is 0xbffff760 from BITWISE AND (last 4 bits are 0)
+0x080483fa <main+6>:    sub    esp,0x60 //value of esp is equal to 0xbffff700
+This gives the stack frame the position from esp= 0xbffff700 to ebp= 0xbffff768
+0x080483fd <main+9>:    mov    DWORD PTR [esp+0x5c],0x0 //now we move the value '0' into esp offset by hex 5c, this must be the modified variable, as all local variables have their space in this stack frame.
+...
+0x08048433 <main+63>:   leave //this moves ebp into esp, destroying the stack frame
+0x08048434 <main+64>:   ret
+
+

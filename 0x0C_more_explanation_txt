@@ -1,0 +1,28 @@
+eip: 0x080483f4 : 0x83e58955
+esp: 0xbffff76c : 0xb7eadc76
+ebp: 0xbffff7e8 : 0x00000000
+0x080483f4 <main+0>:    push   ebp
+
+eip: 0x080483f5 : 0xe483e589
+esp: 0xbffff768 : 0xbffff7e8
+ebp: 0xbffff7e8 : 0x00000000
+0x080483f5 <main+1>:    mov    ebp,esp
+
+eip: 0x080483f7 : 0x83f0e483
+esp: 0xbffff768 : 0xbffff7e8
+ebp: 0xbffff768 : 0xbffff7e8
+0x080483f7 <main+3>:    and    esp,0xfffffff0
+
+eip: 0x080483fa : 0xc760ec83
+esp: 0xbffff760 : 0x08048450
+ebp: 0xbffff768 : 0xbffff7e8
+0x080483fa <main+6>:    sub    esp,0x60
+
+eip: 0x080483fd : 0x5c2444c7
+esp: 0xbffff700 : 0x00000000
+ebp: 0xbffff768 : 0xbffff7e8 //ebp's value is the old base pointer of the PREVIOUS STACK FRAME WHICH CALLED MAIN!
+0x080483fd <main+9>:    mov    DWORD PTR [esp+0x5c],0x0
+...
+0x08048433 <main+63>:   leave
+0x08048434 <main+64>:   ret
+
